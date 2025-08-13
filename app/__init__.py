@@ -1,3 +1,15 @@
+# from flask import Flask
+# from flask_restful import Resource, Api
+
+# app = Flask(__name__)
+# api = Api(app)
+
+# class Hello(Resource):
+#     def get(self):
+#         return {'message': 'test'}
+
+# api.add_resource(Hello, '/hello')
+
 import os
 from flask import Flask
 from flask_jwt_extended import JWTManager
@@ -8,7 +20,6 @@ from .api.models.revoked_token import RevokedToken
 from .api.models.user import User
 from .api import api_blueprint
 from .manage import migrate
-
 def create_app(config_name):
     #初始化Flask项目
     app = Flask(__name__)
@@ -20,6 +31,8 @@ def create_app(config_name):
     migrate.init_app(app, db)
     # 注册蓝图
     app.register_blueprint(api_blueprint)
+
+    # Flask-RESTX已经内置了Swagger文档功能，无需单独配置Swagger
     # 初始化 JWT
     jwt = JWTManager(app)
     register_JWT_hooks(jwt)
