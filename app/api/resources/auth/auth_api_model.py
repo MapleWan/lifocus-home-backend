@@ -12,6 +12,7 @@ user_credentials = auth_ns.model('UserCredentials', {
 
 # 登录成功响应模型
 login_response_data = auth_ns.model('LoginResponseData', {
+    'user_name': fields.String(description='用户名', example='admin'),
     'access_token': fields.String(description='访问令牌'),
     'refresh_token': fields.String(description='刷新令牌'),
     'exp': fields.Integer(description='令牌过期时间戳(毫秒)')

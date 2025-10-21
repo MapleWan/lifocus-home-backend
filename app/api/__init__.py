@@ -8,8 +8,8 @@ api_blueprint = Blueprint('api', __name__, url_prefix='/api')
 api = Api(
     api_blueprint,
     version='1.0',
-    title='Lifocus API',
-    description='Lifocus的RESTful API',
+    title='LiFocus API',
+    description='LiFocus的RESTful API',
     doc='/docs/',  # Swagger文档路径
     authorizations={
         'Bearer': {
@@ -24,17 +24,27 @@ api = Api(
 
 auth_ns = Namespace('auth', description='认证相关接口', path='/auth')
 users_ns = Namespace('users', description='用户管理接口', path='/users')
+notes_ns = Namespace('article', description='笔记管理接口', path='/article')
 
 from app.api.resources.auth.login import Login
 from app.api.resources.auth.logout import Logout
 from app.api.resources.auth.register import Register
 from app.api.resources.user.user import UserService
+from app.api.resources.note.note import NoteService, NoteDetailService
 
+# 登录注册
 auth_ns.add_resource(Register, '/register')
 auth_ns.add_resource(Login, '/login')
 auth_ns.add_resource(Logout, '/logout')
 
+# 用户测试 TODO
 users_ns.add_resource(UserService, '/profile')
+
+# 笔记相关
+notes_ns.add_resource(NoteService, '/note', '/note/<int:note_id>')
+notes_ns.add_resource(NoteDetailService, '/note-detail', '/note-detail/<int:note_id>')
+
 # 注册命名空间到API
 api.add_namespace(auth_ns)
 api.add_namespace(users_ns)
+api.add_namespace(notes_ns)
