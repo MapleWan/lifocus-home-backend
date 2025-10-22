@@ -1,6 +1,7 @@
 from flask_restx import Resource, marshal_with, reqparse
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.api.models.note import Note
+from app.api.models.tag import Tag  # 添加导入Tag模型
 from app.api import notes_ns
 from .note_api_model import note_list_response, note_info_request, note_response
 from ...common.utils import api_response
@@ -50,6 +51,21 @@ class NoteService(Resource):
         
         args = parser.parse_args()
         current_user_id = get_jwt_identity()
+
+        # 处理标签
+        tag_names = []
+        if args['tags']:
+            tag_names = [tag.strip() for tag in args['tags'].split(',') if tag.strip()]
+            for tag_name in tag_names:
+                # 检查标签是否已存在
+                existing_tag = Tag.findTagByNameAndAccountId(tag_name, current_user_id)
+                if not existing_tag:
+                    # 如果标签不存在，则创建新标签
+                    new_tag = Tag(
+                        name=tag_name,
+                        account_id=current_user_id
+                    )
+                    new_tag.addTag()
 
         # 创建新笔记
         new_note = Note(
@@ -106,6 +122,22 @@ class NoteService(Resource):
         parser.add_argument('sharePassword', type=str, required=False, help='分享密码')
 
         args = parser.parse_args()
+
+        # 处理标签
+        if args['tags'] is not None:
+            tag_names = []
+            if args['tags']:
+                tag_names = [tag.strip() for tag in args['tags'].split(',') if tag.strip()]
+                for tag_name in tag_names:
+                    # 检查标签是否已存在
+                    existing_tag = Tag.findTagByNameAndAccountId(tag_name, current_user_id)
+                    if not existing_tag:
+                        # 如果标签不存在，则创建新标签
+                        new_tag = Tag(
+                            name=tag_name,
+                            account_id=current_user_id
+                        )
+                        new_tag.addTag()
 
         # 更新笔记属性
         if args['type'] is not None:
