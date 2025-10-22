@@ -11,8 +11,8 @@ class Note(db.Model):
     type = db.Column(db.String(20), nullable=False, default='note', comment='笔记类型')
     # 内容
     content = db.Column(db.Text(), comment='笔记内容')
-    # 标签
-    tags = db.Column(db.String(255), comment='笔记标签')
+    # 标签IDs（存储逗号分隔的标签ID列表）
+    tag_ids = db.Column(db.String(255), comment='笔记标签IDs')
     # 存储文件夹
     folder = db.Column(db.String(255), comment='存储文件夹')
     # 是否已归档
@@ -47,11 +47,19 @@ class Note(db.Model):
 
     # 笔记信息
     def dict(self):
+        # 获取标签名称列表
+        tag_names = []
+        if self.tag_ids:
+            tag_ids = [int(tag_id.strip()) for tag_id in self.tag_ids.split(',') if tag_id.strip()]
+            tags = Tag.query.filter(Tag.id.in_(tag_ids)).all()
+            tag_names = [tag.name for tag in tags]
+        
         return {
             'id': self.id,
             'type': self.type,
             'content': self.content,
-            'tags': self.tags,
+            'tags': ','.join(tag_names),  # 返回标签名称，而不是ID
+            'tagIds': self.tag_ids,  # 同时返回标签ID
             'folder': self.folder,
             'isArchived': self.is_archived,
             'isRecycle': self.is_recycle,
@@ -94,7 +102,18 @@ class Note(db.Model):
         if 'content' in kwargs and kwargs['content'] is not None:
             query = query.filter(cls.content.like(f"%{kwargs['content']}%"))
         if 'tags' in kwargs and kwargs['tags'] is not None:
-            query = query.filter(cls.tags.like(f"%{kwargs['tags']}%"))
+            # 这里需要特殊处理，因为现在存储的是ID而不是名称
+            # 我们需要先找到匹配名称的标签ID
+            tag_names = [tag.strip() for tag in kwargs['tags'].split(',') if tag.strip()]
+            if tag_names:
+                matching_tags = Tag.query.filter(Tag.name.in_(tag_names)).all()
+                matching_tag_ids = [str(tag.id) for tag in matching_tags]
+                if matching_tag_ids:
+                    # 构造查询条件，查找包含这些标签ID的笔记
+                    conditions = []
+                    for tag_id in matching_tag_ids:
+                        conditions.append(cls.tag_ids.like(f"%{tag_id}%"))
+                    query = query.filter(db.or_(*conditions))
         if 'folder' in kwargs and kwargs['folder'] is not None:
             query = query.filter_by(folder=kwargs['folder'])
         if 'is_archived' in kwargs and kwargs['is_archived'] is not None:
@@ -105,3 +124,6 @@ class Note(db.Model):
             query = query.filter_by(is_share=kwargs['is_share'])
             
         return query.all()
+
+# 导入Tag模型以避免循环导入
+from .tag import Tag

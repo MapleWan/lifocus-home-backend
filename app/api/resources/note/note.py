@@ -53,7 +53,7 @@ class NoteService(Resource):
         current_user_id = get_jwt_identity()
 
         # 处理标签
-        tag_names = []
+        tag_ids = []
         if args['tags']:
             tag_names = [tag.strip() for tag in args['tags'].split(',') if tag.strip()]
             for tag_name in tag_names:
@@ -66,12 +66,15 @@ class NoteService(Resource):
                         account_id=current_user_id
                     )
                     new_tag.addTag()
+                    tag_ids.append(str(new_tag.id))
+                else:
+                    tag_ids.append(str(existing_tag.id))
 
         # 创建新笔记
         new_note = Note(
             type=args['type'],
             content=args['content'],
-            tags=args['tags'],
+            tag_ids=','.join(tag_ids) if tag_ids else None,
             folder=args['folder'],
             is_archived=args['isArchived'],
             is_recycle=args['isRecycle'],
@@ -125,7 +128,7 @@ class NoteService(Resource):
 
         # 处理标签
         if args['tags'] is not None:
-            tag_names = []
+            tag_ids = []
             if args['tags']:
                 tag_names = [tag.strip() for tag in args['tags'].split(',') if tag.strip()]
                 for tag_name in tag_names:
@@ -138,14 +141,18 @@ class NoteService(Resource):
                             account_id=current_user_id
                         )
                         new_tag.addTag()
+                        tag_ids.append(str(new_tag.id))
+                    else:
+                        tag_ids.append(str(existing_tag.id))
+            
+            # 更新笔记的标签IDs
+            note.tag_ids = ','.join(tag_ids) if tag_ids else None
 
         # 更新笔记属性
         if args['type'] is not None:
             note.type = args['type']
         if args['content'] is not None:
             note.content = args['content']
-        if args['tags'] is not None:
-            note.tags = args['tags']
         if args['folder'] is not None:
             note.folder = args['folder']
         if args['isArchived'] is not None:

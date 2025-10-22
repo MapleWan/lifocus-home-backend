@@ -22,6 +22,7 @@ note_info_response = notes_ns.model('NoteInfo', {
     'type': fields.String(description='笔记类型'),
     'content': fields.String(description='笔记内容'),
     'tags': fields.String(description='笔记标签'),
+    'tagIds': fields.String(description='笔记标签IDs'),
     'folder': fields.String(description='笔记所属文件夹'),
     'isArchived': fields.Boolean(description='是否已归档'),
     'isRecycle': fields.Boolean(description='是否在回收站'),
