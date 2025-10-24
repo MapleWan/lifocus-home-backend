@@ -41,6 +41,7 @@ class NoteService(Resource):
         # 解析请求参数
         parser = reqparse.RequestParser()
         parser.add_argument('type', type=str, required=False, default='note', help='笔记类型')
+        parser.add_argument('title', type=str, required=False, help='笔记标题')
         parser.add_argument('content', type=str, required=False, help='笔记内容')
         parser.add_argument('tags', type=str, required=False, help='标签')
         parser.add_argument('folder', type=str, required=False, help='笔记所属文件夹')
@@ -73,6 +74,7 @@ class NoteService(Resource):
         # 创建新笔记
         new_note = Note(
             type=args['type'],
+            title=args['title'],
             content=args['content'],
             tag_ids=','.join(tag_ids) if tag_ids else None,
             folder=args['folder'],
@@ -116,6 +118,7 @@ class NoteService(Resource):
         # 解析请求参数
         parser = reqparse.RequestParser()
         parser.add_argument('type', type=str, required=False, help='笔记类型')
+        parser.add_argument('title', type=str, required=False, help='笔记标题')
         parser.add_argument('content', type=str, required=False, help='笔记内容')
         parser.add_argument('tags', type=str, required=False, help='标签')
         parser.add_argument('folder', type=str, required=False, help='笔记所属文件夹')
@@ -151,6 +154,8 @@ class NoteService(Resource):
         # 更新笔记属性
         if args['type'] is not None:
             note.type = args['type']
+        if args['title'] is not None:
+            note.title = args['title']
         if args['content'] is not None:
             note.content = args['content']
         if args['folder'] is not None:
@@ -241,6 +246,7 @@ class NoteDetailService(Resource):
         # 解析请求参数
         parser = reqparse.RequestParser()
         parser.add_argument('type', type=str, required=False, help='笔记类型')
+        parser.add_argument('title', type=str, required=False, help='笔记标题')
         parser.add_argument('content', type=str, required=False, help='笔记内容')
         parser.add_argument('tags', type=str, required=False, help='标签')
         parser.add_argument('folder', type=str, required=False, help='笔记所属文件夹')
@@ -254,6 +260,8 @@ class NoteDetailService(Resource):
         conditions = {}
         if args['type'] is not None:
             conditions['type'] = args['type']
+        if args['title'] is not None:
+            conditions['title'] = args['title']
         if args['content'] is not None:
             conditions['content'] = args['content']
         if args['tags'] is not None:

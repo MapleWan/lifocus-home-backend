@@ -9,6 +9,8 @@ class Note(db.Model):
     id = db.Column(db.Integer(), primary_key=True, nullable=False, autoincrement=True, comment='主键ID')
     # 类型
     type = db.Column(db.String(20), nullable=False, default='note', comment='笔记类型')
+    # 标题
+    title = db.Column(db.String(255), comment='笔记标题')
     # 内容
     content = db.Column(db.Text(), comment='笔记内容')
     # 标签IDs（存储逗号分隔的标签ID列表）
@@ -57,6 +59,7 @@ class Note(db.Model):
         return {
             'id': self.id,
             'type': self.type,
+            'title': self.title,
             'content': self.content,
             'tags': ','.join(tag_names),  # 返回标签名称，而不是ID
             'tagIds': self.tag_ids,  # 同时返回标签ID
@@ -101,6 +104,8 @@ class Note(db.Model):
             query = query.filter_by(type=kwargs['type'])
         if 'content' in kwargs and kwargs['content'] is not None:
             query = query.filter(cls.content.like(f"%{kwargs['content']}%"))
+        if 'title' in kwargs and kwargs['title'] is not None:
+            query = query.filter(cls.title.like(f"%{kwargs['title']}%"))
         if 'tags' in kwargs and kwargs['tags'] is not None:
             # 这里需要特殊处理，因为现在存储的是ID而不是名称
             # 我们需要先找到匹配名称的标签ID

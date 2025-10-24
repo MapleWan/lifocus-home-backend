@@ -5,6 +5,7 @@ from app.api import notes_ns
 note_info_request = notes_ns.model('NoteInfo', {
     # 'id': fields.Integer(description='笔记ID'),
     'type': fields.String(description='笔记类型'),
+    'title': fields.String(description='笔记标题'),
     'content': fields.String(description='笔记内容'),
     'tags': fields.String(description='笔记标签'),
     'folder': fields.String(description='笔记所属文件夹'),
@@ -20,6 +21,7 @@ note_info_request = notes_ns.model('NoteInfo', {
 note_info_response = notes_ns.model('NoteInfo', {
     'id': fields.Integer(description='笔记ID'),
     'type': fields.String(description='笔记类型'),
+    'title': fields.String(description='笔记标题'),
     'content': fields.String(description='笔记内容'),
     'tags': fields.String(description='笔记标签'),
     'tagIds': fields.String(description='笔记标签IDs'),
