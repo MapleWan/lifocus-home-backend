@@ -53,8 +53,22 @@ class NoteService(Resource):
         args = parser.parse_args()
         current_user_id = get_jwt_identity()
 
-        # 处理标签
-        tag_ids = []
+        # 创建新笔记
+        new_note = Note(
+            type=args['type'],
+            title=args['title'],
+            content=args['content'],
+            folder=args['folder'],
+            is_archived=args['isArchived'],
+            is_recycle=args['isRecycle'],
+            is_share=args['isShare'],
+            share_password=args['sharePassword'],
+            account_id=current_user_id
+        )
+        
+        new_note.addNote()
+        
+        # 处理标签（使用多对多关系）
         if args['tags']:
             tag_names = [tag.strip() for tag in args['tags'].split(',') if tag.strip()]
             for tag_name in tag_names:
@@ -67,25 +81,9 @@ class NoteService(Resource):
                         account_id=current_user_id
                     )
                     new_tag.addTag()
-                    tag_ids.append(str(new_tag.id))
+                    new_note.tags.append(new_tag)  # 这里会自动插入到 note_tags 表
                 else:
-                    tag_ids.append(str(existing_tag.id))
-
-        # 创建新笔记
-        new_note = Note(
-            type=args['type'],
-            title=args['title'],
-            content=args['content'],
-            tag_ids=','.join(tag_ids) if tag_ids else None,
-            folder=args['folder'],
-            is_archived=args['isArchived'],
-            is_recycle=args['isRecycle'],
-            is_share=args['isShare'],
-            share_password=args['sharePassword'],
-            account_id=current_user_id
-        )
-        
-        new_note.addNote()
+                    new_note.tags.append(existing_tag) # 这里也会自动插入到 note_tags 表
         
         return {
             'success': True,
@@ -129,9 +127,11 @@ class NoteService(Resource):
 
         args = parser.parse_args()
 
-        # 处理标签
+        # 处理标签（使用多对多关系）
         if args['tags'] is not None:
-            tag_ids = []
+            # 清空现有标签关联
+            note.tags = []
+            
             if args['tags']:
                 tag_names = [tag.strip() for tag in args['tags'].split(',') if tag.strip()]
                 for tag_name in tag_names:
@@ -144,12 +144,9 @@ class NoteService(Resource):
                             account_id=current_user_id
                         )
                         new_tag.addTag()
-                        tag_ids.append(str(new_tag.id))
+                        note.tags.append(new_tag)
                     else:
-                        tag_ids.append(str(existing_tag.id))
-            
-            # 更新笔记的标签IDs
-            note.tag_ids = ','.join(tag_ids) if tag_ids else None
+                        note.tags.append(existing_tag)
 
         # 更新笔记属性
         if args['type'] is not None:

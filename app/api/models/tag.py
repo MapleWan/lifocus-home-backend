@@ -1,6 +1,7 @@
 from . import db
 from datetime import datetime
 from ..common.utils import format_datetime_to_json
+from .note_tag import note_tags
 
 class Tag(db.Model):
     __tablename__ = 'tag'  # 表名 与 数据库中的表名一一对应
@@ -15,6 +16,18 @@ class Tag(db.Model):
     updated_at = db.Column(db.DateTime(), nullable=False, default=datetime.now, onupdate=datetime.now, comment='更新时间')
     # 账户ID (外键)
     account_id = db.Column(db.Integer(), db.ForeignKey('user.id'), comment='账户ID')
+    
+    # 多对多关系：笔记
+    notes = db.relationship('Note', secondary=note_tags, back_populates='tags', lazy='dynamic')
+    '''
+        这段代码的作用是在当前模型（很可能是 Tag 模型）中定义与 Note 模型的多对多关系。
+        具体参数含义如下：
+        'Note': 这是指定关系的另一端是 Note 类（模型）。SQLAlchemy 通过这个名称找到对应的模型类。
+        secondary=note_tags: 指定用于存储多对多关系的关联表。这里 note_tags 应该是一个关联表，用来连接 Tag 和 Note 两个实体。
+        back_populates='tags': 指定在 Note 模型中用来访问 Tag 的属性名。这意味着在 Note 模型中应该有一个名为 tags 的属性，它也定义了反向关系。
+        lazy='dynamic': 这个参数控制 SQLAlchemy 如何加载相关项。使用 'dynamic' 意味着当访问 notes 属性时，不会立即加载所有相关的 Note 对象，而是返回一个查询对象（Query 对象），可以继续添加过滤器或其他查询条件后再执行实际查询。
+        总结来说，这行代码定义了一个多对多的关系，允许从 Tag 实体访问与其关联的所有 Note 实体，并且采用延迟加载的方式优化性能。
+    '''
 
     # 新增标签
     def addTag(self):

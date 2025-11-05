@@ -1,6 +1,7 @@
 from . import db
 from datetime import datetime
 from ..common.utils import format_datetime_to_json
+from .note_tag import note_tags
 
 class Note(db.Model):
     __tablename__ = 'note' # 表名 与 数据库中的表名一一对应
@@ -13,8 +14,6 @@ class Note(db.Model):
     title = db.Column(db.String(255), comment='笔记标题')
     # 内容
     content = db.Column(db.Text(), comment='笔记内容')
-    # 标签IDs（存储逗号分隔的标签ID列表）
-    tag_ids = db.Column(db.String(255), comment='笔记标签IDs')
     # 存储文件夹
     folder = db.Column(db.String(255), comment='存储文件夹')
     # 是否已归档
@@ -31,6 +30,9 @@ class Note(db.Model):
     updated_at = db.Column(db.DateTime(), nullable=False, default=datetime.now, onupdate=datetime.now, comment='更新时间')
     # 账户ID (外键)
     account_id = db.Column(db.Integer(), db.ForeignKey('user.id'), comment='账户ID')
+    
+    # 多对多关系：标签
+    tags = db.relationship('Tag', secondary=note_tags, back_populates='notes', lazy='dynamic')
 
     # 新增笔记
     def addNote(self):
@@ -49,12 +51,9 @@ class Note(db.Model):
 
     # 笔记信息
     def dict(self):
-        # 获取标签名称列表
-        tag_names = []
-        if self.tag_ids:
-            tag_ids = [int(tag_id.strip()) for tag_id in self.tag_ids.split(',') if tag_id.strip()]
-            tags = Tag.query.filter(Tag.id.in_(tag_ids)).all()
-            tag_names = [tag.name for tag in tags]
+        # 获取标签名称列表和ID列表
+        tag_names = [tag.name for tag in self.tags]
+        tag_ids = [str(tag.id) for tag in self.tags]
         
         return {
             'id': self.id,
@@ -62,7 +61,7 @@ class Note(db.Model):
             'title': self.title,
             'content': self.content,
             'tags': ','.join(tag_names),  # 返回标签名称，而不是ID
-            'tagIds': self.tag_ids,  # 同时返回标签ID
+            'tagIds': ','.join(tag_ids),  # 返回标签ID
             'folder': self.folder,
             'isArchived': self.is_archived,
             'isRecycle': self.is_recycle,
@@ -107,18 +106,11 @@ class Note(db.Model):
         if 'title' in kwargs and kwargs['title'] is not None:
             query = query.filter(cls.title.like(f"%{kwargs['title']}%"))
         if 'tags' in kwargs and kwargs['tags'] is not None:
-            # 这里需要特殊处理，因为现在存储的是ID而不是名称
-            # 我们需要先找到匹配名称的标签ID
+            # 根据标签名称查询笔记
             tag_names = [tag.strip() for tag in kwargs['tags'].split(',') if tag.strip()]
             if tag_names:
-                matching_tags = Tag.query.filter(Tag.name.in_(tag_names)).all()
-                matching_tag_ids = [str(tag.id) for tag in matching_tags]
-                if matching_tag_ids:
-                    # 构造查询条件，查找包含这些标签ID的笔记
-                    conditions = []
-                    for tag_id in matching_tag_ids:
-                        conditions.append(cls.tag_ids.like(f"%{tag_id}%"))
-                    query = query.filter(db.or_(*conditions))
+                # 使用多对多关系进行查询
+                query = query.join(cls.tags).filter(Tag.name.in_(tag_names))
         if 'folder' in kwargs and kwargs['folder'] is not None:
             query = query.filter_by(folder=kwargs['folder'])
         if 'is_archived' in kwargs and kwargs['is_archived'] is not None:
