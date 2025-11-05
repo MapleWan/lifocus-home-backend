@@ -40,10 +40,10 @@ class NoteService(Resource):
     def post(self):
         # 解析请求参数
         parser = reqparse.RequestParser()
-        parser.add_argument('type', type=str, required=False, default='note', help='笔记类型')
-        parser.add_argument('title', type=str, required=False, help='笔记标题')
-        parser.add_argument('content', type=str, required=False, help='笔记内容')
-        parser.add_argument('tags', type=str, required=False, help='标签')
+        parser.add_argument('type', type=str, required=True, default='note', help='笔记类型')
+        parser.add_argument('title', type=str, required=True, help='笔记标题')
+        parser.add_argument('content', type=str, required=True, help='笔记内容')
+        parser.add_argument('tags', type=str, required=True, help='标签')
         parser.add_argument('folder', type=str, required=False, help='笔记所属文件夹')
         parser.add_argument('isArchived', type=bool, required=False, default=False, help='是否已归档')
         parser.add_argument('isRecycle', type=bool, required=False, default=False, help='是否在回收站')
